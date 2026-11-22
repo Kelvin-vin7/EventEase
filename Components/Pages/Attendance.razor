@@ -1,0 +1,73 @@
+@page "/attendance"
+@inject EventService EventSvc
+@inject RegistrationService RegistrationSvc
+
+<PageTitle>Attendance Tracker</PageTitle>
+
+<h1>Attendance Tracker</h1>
+
+<label>Pilih event
+    <select @bind="selectedEventId">
+        @foreach (var ev in events)
+        {
+            <option value="@ev.Id">@ev.Name (@ev.Date.ToString("dd MMM yyyy"))</option>
+        }
+    </select>
+</label>
+
+@if (attendees.Count == 0)
+{
+    <p>Belum ada peserta terdaftar untuk event ini. <a href="register/@selectedEventId">Daftarkan peserta</a>.</p>
+}
+else
+{
+    <p class="summary">
+        Hadir: <strong>@attendees.Where(a => a.Attended).Sum(a => a.Tickets)</strong>
+        dari <strong>@attendees.Sum(a => a.Tickets)</strong> tiket
+        (@Percent.ToString("0")%)
+    </p>
+
+    <table class="table">
+        <thead>
+            <tr><th>Nama</th><th>Email</th><th>Tiket</th><th>Hadir</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var a in attendees)
+            {
+                <tr @key="a.Id">
+                    <td>@a.FullName</td>
+                    <td>@a.Email</td>
+                    <td>@a.Tickets</td>
+                    <td>
+                        <input type="checkbox" checked="@a.Attended"
+                               @onchange="e => Toggle(a, e.Value is true)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<EventItem> events = new();
+    private int selectedEventId;
+
+    private List<Attendee> attendees => RegistrationSvc.GetByEvent(selectedEventId);
+
+    private double Percent
+    {
+        get
+        {
+            var total = attendees.Sum(a => a.Tickets);
+            return total == 0 ? 0 : attendees.Where(a => a.Attended).Sum(a => a.Tickets) * 100.0 / total;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        events = EventSvc.GetAll();
+        selectedEventId = events.FirstOrDefault()?.Id ?? 0;
+    }
+
+    private void Toggle(Attendee a, bool attended) => RegistrationSvc.SetAttended(a.Id, attended);
+}
