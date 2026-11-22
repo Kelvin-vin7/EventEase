@@ -1,0 +1,98 @@
+@inject EventService EventSvc
+@inject RegistrationService RegistrationSvc
+
+<div class="card">
+    @if (!editing)
+    {
+        <h3>@Event.Name</h3>
+        <p class="meta">📅 @Event.Date.ToString("dd MMMM yyyy") · 📍 @Event.Location</p>
+        <p>@Event.Description</p>
+        <p class="seats @(Remaining == 0 ? "full" : "")">Sisa kursi: @Remaining / @Event.Capacity</p>
+        <div class="actions">
+            <a class="btn" href="events/@Event.Id">Detail</a>
+            <a class="btn primary @(Remaining == 0 ? "disabled" : "")" href="register/@Event.Id">Daftar</a>
+            <button class="btn" @onclick="StartEdit">Edit</button>
+        </div>
+    }
+    else if (draft is not null)
+    {
+        <EditForm Model="draft" OnValidSubmit="Save">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <label>Nama event
+                <InputText @bind-Value="draft.Name" />
+            </label>
+            <label>Tanggal
+                <InputDate @bind-Value="draft.Date" />
+            </label>
+            <label>Lokasi
+                <InputText @bind-Value="draft.Location" />
+            </label>
+            <label>Deskripsi
+                <InputTextArea @bind-Value="draft.Description" rows="3" />
+            </label>
+            <label>Kapasitas
+                <InputNumber @bind-Value="draft.Capacity" />
+            </label>
+
+            @if (error is not null)
+            {
+                <div class="alert error">@error</div>
+            }
+
+            <div class="actions">
+                <button type="submit" class="btn primary">Simpan</button>
+                <button type="button" class="btn" @onclick="Cancel">Batal</button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    // Parameter dua arah: gunakan @bind-Event="..." atau Event + EventChanged
+    [Parameter, EditorRequired] public EventItem Event { get; set; } = default!;
+    [Parameter] public EventCallback<EventItem> EventChanged { get; set; }
+
+    private bool editing;
+    private EventItem? draft;
+    private string? error;
+
+    private int Remaining => RegistrationSvc.Remaining(Event);
+
+    private void StartEdit()
+    {
+        draft = Event.Clone();   // edit pada salinan agar "Batal" tidak mengubah data asli
+        error = null;
+        editing = true;
+    }
+
+    private void Cancel()
+    {
+        editing = false;
+        draft = null;
+    }
+
+    private async Task Save()
+    {
+        if (draft is null) return;
+
+        var booked = RegistrationSvc.TotalTickets(draft.Id);
+        if (draft.Capacity < booked)
+        {
+            error = $"Kapasitas tidak boleh kurang dari tiket yang sudah terdaftar ({booked}).";
+            return;
+        }
+
+        EventSvc.Update(draft);
+        Event.Name = draft.Name;
+        Event.Date = draft.Date;
+        Event.Location = draft.Location;
+        Event.Description = draft.Description;
+        Event.Capacity = draft.Capacity;
+
+        editing = false;
+        draft = null;
+        await EventChanged.InvokeAsync(Event);
+    }
+}
