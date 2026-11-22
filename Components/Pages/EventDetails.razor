@@ -1,0 +1,27 @@
+@page "/events/{Id:int}"
+@inject EventService EventSvc
+
+<PageTitle>Detail Event</PageTitle>
+
+@if (item is null)
+{
+    <h1>Event tidak ditemukan</h1>
+    <div class="alert error">Event dengan ID @Id tidak ada.</div>
+    <a class="btn" href="events">Kembali ke daftar event</a>
+}
+else
+{
+    <h1>Detail Event</h1>
+    <EventCard Event="item" EventChanged="OnChanged" />
+    <a class="btn" href="events">&larr; Kembali</a>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private EventItem? item;
+
+    protected override void OnParametersSet() => item = EventSvc.GetById(Id);
+
+    private void OnChanged(EventItem _) => item = EventSvc.GetById(Id);
+}
