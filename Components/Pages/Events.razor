@@ -1,0 +1,36 @@
+@page "/events"
+@inject EventService EventSvc
+
+<PageTitle>Daftar Event</PageTitle>
+
+<h1>Daftar Event</h1>
+
+<input class="search" placeholder="Cari event atau lokasi..." @bind="search" @bind:event="oninput" />
+
+@if (Filtered.Count == 0)
+{
+    <p>Tidak ada event yang cocok dengan pencarian.</p>
+}
+else
+{
+    <div class="grid">
+        @foreach (var ev in Filtered)
+        {
+            <EventCard Event="ev" EventChanged="OnEventChanged" @key="ev.Id" />
+        }
+    </div>
+}
+
+@code {
+    private List<EventItem> events = new();
+    private string search = "";
+
+    protected override void OnInitialized() => events = EventSvc.GetAll();
+
+    private List<EventItem> Filtered => string.IsNullOrWhiteSpace(search)
+        ? events
+        : events.Where(e => e.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                         || e.Location.Contains(search, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private void OnEventChanged(EventItem _) => events = EventSvc.GetAll();
+}
