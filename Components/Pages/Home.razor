@@ -1,0 +1,22 @@
+@page "/"
+@inject UserSessionService Session
+
+<PageTitle>EventEase</PageTitle>
+
+<h1>Selamat datang di EventEase</h1>
+<p>Kelola event, daftarkan peserta, dan catat kehadiran dengan mudah.</p>
+
+<div class="actions">
+    <a class="btn primary" href="events">Lihat Event</a>
+    <a class="btn" href="attendance">Attendance Tracker</a>
+</div>
+
+@if (Session.HasProfile)
+{
+    <div class="card">
+        <h3>Sesi Anda</h3>
+        <p>Nama: @Session.FullName · Email: @Session.Email</p>
+        <p>Event yang sudah Anda daftar di sesi ini: @Session.RegisteredEventIds.Count</p>
+        <button class="btn" @onclick="Session.Clear">Hapus data sesi</button>
+    </div>
+}
