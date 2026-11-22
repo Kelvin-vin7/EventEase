@@ -1,0 +1,118 @@
+@page "/register/{EventId:int}"
+@inject EventService EventSvc
+@inject RegistrationService RegistrationSvc
+@inject UserSessionService Session
+
+<PageTitle>Pendaftaran Event</PageTitle>
+
+@if (ev is null)
+{
+    <h1>Event tidak ditemukan</h1>
+    <div class="alert error">Event dengan ID @EventId tidak ada.</div>
+    <a class="btn" href="events">Kembali ke daftar event</a>
+}
+else
+{
+    <h1>Pendaftaran: @ev.Name</h1>
+    <p class="meta">📅 @ev.Date.ToString("dd MMMM yyyy") · 📍 @ev.Location</p>
+    <p class="seats @(Remaining == 0 ? "full" : "")">Sisa kursi: @Remaining / @ev.Capacity</p>
+
+    @if (success is not null)
+    {
+        <div class="alert success">
+            Pendaftaran berhasil! Terima kasih, <strong>@success.FullName</strong>
+            (@success.Tickets tiket). Konfirmasi dikirim ke @success.Email.
+        </div>
+        <div class="actions">
+            <a class="btn primary" href="events">Lihat event lain</a>
+            <a class="btn" href="attendance">Attendance Tracker</a>
+        </div>
+    }
+    else if (Remaining <= 0)
+    {
+        <div class="alert error">Maaf, kursi untuk event ini sudah penuh.</div>
+        <a class="btn" href="events">Kembali</a>
+    }
+    else
+    {
+        @if (Session.IsRegistered(ev.Id))
+        {
+            <div class="alert info">Anda sudah mendaftar event ini pada sesi ini. Anda tetap dapat mendaftarkan email lain.</div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="Submit" FormName="register">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <label>Nama lengkap
+                <InputText @bind-Value="model.FullName" />
+                <ValidationMessage For="() => model.FullName" />
+            </label>
+            <label>Email
+                <InputText @bind-Value="model.Email" />
+                <ValidationMessage For="() => model.Email" />
+            </label>
+            <label>Telepon (opsional)
+                <InputText @bind-Value="model.Phone" />
+                <ValidationMessage For="() => model.Phone" />
+            </label>
+            <label>Jumlah tiket
+                <InputNumber @bind-Value="model.Tickets" />
+                <ValidationMessage For="() => model.Tickets" />
+            </label>
+            <label class="check">
+                <InputCheckbox @bind-Value="model.Agree" /> Saya menyetujui syarat &amp; ketentuan
+                <ValidationMessage For="() => model.Agree" />
+            </label>
+
+            @if (error is not null)
+            {
+                <div class="alert error">@error</div>
+            }
+
+            <div class="actions">
+                <button type="submit" class="btn primary">Daftar</button>
+                <a class="btn" href="events">Batal</a>
+            </div>
+        </EditForm>
+    }
+}
+
+@code {
+    [Parameter] public int EventId { get; set; }
+
+    private EventItem? ev;
+    private RegistrationModel model = new();
+    private Attendee? success;
+    private string? error;
+
+    private int Remaining => ev is null ? 0 : RegistrationSvc.Remaining(ev);
+
+    protected override void OnParametersSet()
+    {
+        ev = EventSvc.GetById(EventId);
+        success = null;
+        error = null;
+        // Isi otomatis dari state sesi bila pengguna pernah mendaftar
+        model = new RegistrationModel
+        {
+            FullName = Session.FullName ?? "",
+            Email = Session.Email ?? ""
+        };
+    }
+
+    private void Submit()
+    {
+        error = null;
+        var (attendee, err) = RegistrationSvc.Register(EventId, model);
+        if (attendee is null)
+        {
+            error = err;
+            return;
+        }
+
+        Session.SaveProfile(attendee.FullName, attendee.Email);
+        Session.AddRegistration(EventId);
+        success = attendee;
+    }
+}
