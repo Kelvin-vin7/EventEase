@@ -1,0 +1,20 @@
+@implements IDisposable
+@inject UserSessionService Session
+
+<nav class="nav">
+    <NavLink href="" Match="NavLinkMatch.All">Beranda</NavLink>
+    <NavLink href="events">Event</NavLink>
+    <NavLink href="attendance">Kehadiran</NavLink>
+    @if (Session.HasProfile)
+    {
+        <span class="user">Halo, @Session.FullName</span>
+    }
+</nav>
+
+@code {
+    protected override void OnInitialized() => Session.Changed += OnSessionChanged;
+
+    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Session.Changed -= OnSessionChanged;
+}
