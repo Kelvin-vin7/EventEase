@@ -13,6 +13,9 @@ builder.Services.AddScoped<UserSessionService>();
 
 var app = builder.Build();
 
+// Alamat yang tidak dikenal diarahkan ke halaman /not-found
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
 app.UseStaticFiles();
 app.UseAntiforgery();
 
