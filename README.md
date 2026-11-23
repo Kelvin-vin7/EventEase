@@ -1,6 +1,6 @@
 # EventEase
 
-Aplikasi manajemen event berbasis **Blazor Server (.NET 8)**: daftar event, pendaftaran peserta dengan validasi, state sesi pengguna, dan pelacak kehadiran (Attendance Tracker). Proyek ini menggabungkan hasil tiga aktivitas sebelumnya yang dikerjakan dengan bantuan **Microsoft Copilot**.
+Aplikasi manajemen event berbasis **Blazor Server (.NET 10)**: daftar event, pendaftaran peserta dengan validasi, state sesi pengguna, dan pelacak kehadiran (Attendance Tracker). Proyek ini menggabungkan hasil tiga aktivitas sebelumnya yang dikerjakan dengan bantuan **Microsoft Copilot**.
 
 ## Fitur
 
@@ -14,7 +14,7 @@ Aplikasi manajemen event berbasis **Blazor Server (.NET 8)**: daftar event, pend
 
 ## Cara menjalankan
 
-Prasyarat: [.NET 8 SDK](https://dotnet.microsoft.com/download).
+Prasyarat: [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```bash
 dotnet run
